@@ -20,4 +20,8 @@ class Entities
     public function addEntity(Entity $entity): void {
         $this->entities[] = $entity;
     }
+
+    public function removeEntities(): void {
+        $this->entities = array();
+    }
 }
