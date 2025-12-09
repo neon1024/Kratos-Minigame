@@ -4,43 +4,40 @@ namespace App\Models;
 
 class Monster extends Entity
 {
-    public function __construct(int $health, int $strength, int $defence, int $speed, float $luck)
-    {
-        parent::__construct($health, $strength, $defence, $speed, $luck);
-    }
-
-    private function getRandomHealth(): int {
+    private static function getRandomHealth(): int {
         // 50 - 80
-        return 50;
+        return rand(50, 80);
     }
 
-    private function getRandomStrength(): int {
+    private static function getRandomStrength(): int {
         // 55 - 80
-        return 55;
+        return rand(55, 80);
     }
 
-    private function getRandomDefence(): int {
+    private static function getRandomDefence(): int {
         // 50 - 70
-        return 50;
+        return rand(50, 70);
     }
 
-    private function getRandomSpeed(): int {
+    private static function getRandomSpeed(): int {
         // 40 - 60
-        return 40;
+        return rand(40, 60);
     }
 
-    private function getRandomLuck(): float {
+    private static function getRandomLuck(): float {
         // 30% - 45%
-        return 0.3;
+        $random_int = rand(30, 45);
+
+        return $random_int / 100.0;
     }
 
-    public function fromRandomStats(): Monster {
-        $health = $this->getRandomHealth();
-        $strength = $this->getRandomStrength();
-        $defence = $this->getRandomDefence();
-        $speed = $this->getRandomSpeed();
-        $luck = $this->getRandomLuck();
+    public static function fromRandomStats(): self {
+        $health = self::getRandomHealth();
+        $strength = self::getRandomStrength();
+        $defence = self::getRandomDefence();
+        $speed = self::getRandomSpeed();
+        $luck = self::getRandomLuck();
 
-        return new Monster($health, $strength, $defence, $speed, $luck);
+        return new self($health, $strength, $defence, $speed, $luck);
     }
 }
