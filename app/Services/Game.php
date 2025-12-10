@@ -11,42 +11,34 @@ use App\Models\SkillType;
 
 class Game
 {
-    private Kratos $kratos;
-    private Monster $monster;
+    private Entity $attacker;
+    private Entity $defender;
     private int $turn;
     private int $max_turns;
+    private ?Entity $winner = null;
 
     public function start(): void {
         $this->initialize();
 
         // begin combat
         // first attacker is who has the highest speed, or luck if speeds are equal
-        if($this->kratos->getSpeed() > $this->monster->getSpeed()) {
-            $attacker = $this->kratos;
-            $defender = $this->monster;
-        } elseif($this->kratos->getSpeed() == $this->monster->getSpeed()) {
-            if($this->kratos->getLuck() > $this->monster->getLuck()) {
-                $attacker = $this->kratos;
-                $defender = $this->monster;
-            } else {
-                $attacker = $this->monster;
-                $defender = $this->kratos;
+        if($this->attacker->getSpeed() < $this->defender->getSpeed()) {
+            $this->swapRoles();
+        } elseif($this->attacker->getSpeed() == $this->defender->getSpeed()) {
+            if($this->attacker->getLuck() < $this->defender->getLuck()) {
+                $this->swapRoles();
             }
-        } else {
-            $attacker = $this->monster;
-            $defender = $this->kratos;
         }
 
         while($this->turn <= $this->max_turns) {
             // defender
-
             $damage_multiplier = 1;
 
             // use skills if present
-            if($defender instanceof Kratos) {
+            if($this->defender instanceof Kratos) {
                 // filter defence skills
                 $defence_skills = array_filter(
-                    $defender->getSkills(),
+                    $this->defender->getSkills(),
                     function(Skill $skill) {
                         return $skill->getSkillType() == SkillType::Defence;
                     });
@@ -69,10 +61,10 @@ class Game
             // attacker
             $strikes = 1;
 
-            if($attacker instanceof Kratos) {
+            if($this->attacker instanceof Kratos) {
                 // filter attack skills
                 $attack_skills = array_filter(
-                    $attacker->getSkills(),
+                    $this->attacker->getSkills(),
                     function(Skill $skill) {
                         return $skill->getSkillType() == SkillType::Attack;
                     });
@@ -99,50 +91,73 @@ class Game
             $dodges = 0;
 
             for($try_to_dodge = 0; $try_to_dodge < $strikes; $try_to_dodge++) {
-                if ($this->dodgeTriggered($defender)) {
+                if ($this->dodgeTriggered($this->defender)) {
                     $dodges++;
                 }
             }
 
             // damage = attacker strength - defender defence
             $effective_strikes = max(0, $strikes - $dodges);
-            $base_damage = max(0, $attacker->getStrength() - $defender->getDefence());
+            $base_damage = max(0, $this->attacker->getStrength() - $this->defender->getDefence());
             $damage = $effective_strikes * $base_damage * $damage_multiplier;
-            $defender->setHealth($defender->getHealth() - $damage);
-
-            // switch roles
-            $aux = $attacker;
-            $attacker = $defender;
-            $defender = $aux;
+            $this->defender->setHealth($this->defender->getHealth() - $damage);
 
             // game ends after 15 turns or if one of the entities dies
-            if($attacker->getHealth() <= 0 or $defender->getHealth() <= 0) {
+            if($this->attacker->getHealth() <= 0) {
+                $this->winner = $this->defender;
                 break;
-            }
+            } elseif($this->defender->getHealth() <= 0) {
+                $this->winner = $this->attacker;
+                break;
+            } else {
+                // continue the game
+                $this->turn++;
 
-            $this->turn++;
+                // swap roles if game continues
+                if($this->turn <= $this->max_turns) {
+                    $this->swapRoles();
+                }
+            }
+        }
+    }
+
+    public function getResults(): string {
+        if($this->winner instanceof Kratos) {
+            $message = "Kratos wins in $this->turn turns!";
+        } elseif($this->winner instanceof Monster) {
+            $message = "Monster wins in $this->turn turns!";
+        } else {
+            $message = "Tie! Maximum number of turns exceeded.";
         }
 
-        // TODO show game results
+        return $message;
     }
 
     private function initialize(): void {
+        // assume attacker is Kratos
         // create Kratos with random stats
-        $this->createKratosRandom();
+        $this->attacker = $this->createKratosRandom();
 
+        // assume defender is Monster
         // create Monster with random stats
-        $this->createMonsterRandom();
+        $this->defender = $this->createMonsterRandom();
 
         $this->turn = 1;
         $this->max_turns = 15;
     }
 
-    private function createKratosRandom(): void {
-        $this->kratos = Kratos::fromRandomStats();
+    private function createKratosRandom(): Kratos {
+        return Kratos::fromRandomStats();
     }
 
-    private function createMonsterRandom(): void {
-        $this->monster = Monster::fromRandomStats();
+    private function createMonsterRandom(): Monster {
+        return Monster::fromRandomStats();
+    }
+
+    private function swapRoles(): void {
+        $aux = $this->attacker;
+        $this->attacker = $this->defender;
+        $this->defender = $aux;
     }
 
     private function dodgeTriggered(Entity $entity): bool {

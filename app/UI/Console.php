@@ -7,19 +7,18 @@ use App\Services\Game;
 class Console
 {
     private Game $game;
-    private string $user_input;
+
+    public function __construct(Game $game)
+    {
+        $this->game = $game;
+    }
 
     public function run(): void {
         while(true) {
-            $this->show_menu();
+            // TO DO start game
 
-            $this->user_input = readline();
-
-            // read input
+            $this->game->start();
+            echo $this->game->getResults();
         }
-    }
-
-    private function show_menu(): void {
-        echo "Start game? [y]: ";
     }
 }
