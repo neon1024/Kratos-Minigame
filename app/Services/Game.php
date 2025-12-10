@@ -5,11 +5,12 @@ namespace App\Services;
 use App\Models\Entity;
 use App\Models\Kratos;
 use App\Models\Monster;
-use App\Repositories\Entities;
+use App\Models\Skill;
+use App\Models\SkillEffectType;
+use App\Models\SkillType;
 
 class Game
 {
-    private Entities $entities;
     private Kratos $kratos;
     private Monster $monster;
     private int $turn;
@@ -37,32 +38,77 @@ class Game
         }
 
         while($this->turn <= $this->max_turns) {
-            // based on luck, the defender can dodge an attack
-            $dodges = 0;
+            // defender
 
-            if($this->dodgeTriggered($defender)) {
-                $dodges++;
-            }
+            $damage_multiplier = 1;
 
             // use skills if present
-
             if($defender instanceof Kratos) {
+                // filter defence skills
+                $defence_skills = array_filter(
+                    $defender->getSkills(),
+                    function(Skill $skill) {
+                        return $skill->getSkillType() == SkillType::Defence;
+                    });
+
                 // check for triggered skills
+                foreach($defence_skills as /** @var Skill $skill */ $skill) {
+                    if($this->skillTriggered($skill)) {
+                        // apply the skill effect
+                        switch($skill->getSkillEffectType()) {
+                            case SkillEffectType::DamageReduction:
+                                $damage_multiplier *= $skill->getSkillEffectPower();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
             }
 
-            $strikes = 0;
+            // attacker
+            $strikes = 1;
 
             if($attacker instanceof Kratos) {
+                // filter attack skills
+                $attack_skills = array_filter(
+                    $attacker->getSkills(),
+                    function(Skill $skill) {
+                        return $skill->getSkillType() == SkillType::Attack;
+                    });
+
                 // check for triggered skills
+                foreach($attack_skills as /** @var Skill $skill */ $skill) {
+                    if($this->skillTriggered($skill)) {
+                        // apply the skill effect
+                        switch($skill->getSkillEffectType()) {
+                            case SkillEffectType::MultipleStrikes:
+                                if($strikes > 1) {
+                                    $strikes += $skill->getSkillEffectPower();
+                                } else {
+                                    $strikes = $skill->getSkillEffectPower();
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+
+            $dodges = 0;
+
+            for($try_to_dodge = 0; $try_to_dodge < $strikes; $try_to_dodge++) {
+                if ($this->dodgeTriggered($defender)) {
+                    $dodges++;
+                }
             }
 
             // damage = attacker strength - defender defence
-            if($dodges >= $strikes) {
-                continue;
-            } else {
-                $damage = ($strikes - $dodges) * ($attacker->getStrength() - $defender->getDefence());
-                $defender->setHealth($defender->getHealth() - $damage);
-            }
+            $effective_strikes = max(0, $strikes - $dodges);
+            $base_damage = max(0, $attacker->getStrength() - $defender->getDefence());
+            $damage = $effective_strikes * $base_damage * $damage_multiplier;
+            $defender->setHealth($defender->getHealth() - $damage);
 
             // switch roles
             $aux = $attacker;
@@ -78,8 +124,6 @@ class Game
         }
 
         // TODO show game results
-
-        $this->reset();
     }
 
     private function initialize(): void {
@@ -94,11 +138,11 @@ class Game
     }
 
     private function createKratosRandom(): void {
-        $this->entities->addEntity(Kratos::fromRandomStats());
+        $this->kratos = Kratos::fromRandomStats();
     }
 
     private function createMonsterRandom(): void {
-        $this->entities->addEntity(Monster::fromRandomStats());
+        $this->monster = Monster::fromRandomStats();
     }
 
     private function dodgeTriggered(Entity $entity): bool {
@@ -108,7 +152,10 @@ class Game
         return $random_int / 100.0 <= $dodge_chance;
     }
 
-    private function reset(): void {
-        $this->entities->removeEntities();
+    private function skillTriggered(Skill $skill): bool {
+        $chance = $skill->getChance();
+        $random_int = mt_rand(0, 100);
+
+        return $random_int / 100.0 <= $chance;
     }
 }
