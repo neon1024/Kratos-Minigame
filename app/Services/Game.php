@@ -16,6 +16,7 @@ class Game
     private int $turn;
     private int $max_turns;
     private ?Entity $winner = null;
+    private array $turns;
 
     public function start(): void {
         $this->initialize();
@@ -31,6 +32,10 @@ class Game
         }
 
         while($this->turn <= $this->max_turns) {
+            $attacker_name = $this->attacker instanceof Kratos ? "Kratos" : "Monster";
+            $defender_name = $this->defender instanceof Kratos ? "Kratos" : "Monster";
+            $turn_info = "Turn $this->turn; Attacker $attacker_name; Defender $defender_name;";
+            
             // defender
             $damage_multiplier = 1;
 
@@ -54,6 +59,9 @@ class Game
                             default:
                                 break;
                         }
+
+                        $skill_name = $skill->getName();
+                        $turn_info .= " Skill $skill_name used;";
                     }
                 }
             }
@@ -84,6 +92,9 @@ class Game
                             default:
                                 break;
                         }
+
+                        $skill_name = $skill->getName();
+                        $turn_info .= " Skill $skill_name used;";
                     }
                 }
             }
@@ -93,6 +104,8 @@ class Game
             for($try_to_dodge = 0; $try_to_dodge < $strikes; $try_to_dodge++) {
                 if ($this->dodgeTriggered($this->defender)) {
                     $dodges++;
+
+                    $turn_info .= " Dodged an attack!;";
                 }
             }
 
@@ -101,6 +114,12 @@ class Game
             $base_damage = max(0, $this->attacker->getStrength() - $this->defender->getDefence());
             $damage = $effective_strikes * $base_damage * $damage_multiplier;
             $this->defender->setHealth($this->defender->getHealth() - $damage);
+
+            $turn_info .= " $damage damage done;";
+            $attacker_health = $this->attacker->getHealth();
+            $defender_health = $this->defender->getHealth();
+            $turn_info .= " Attacker has $attacker_health HP; Defender has $defender_health HP;";
+            $this->turns[] = $turn_info . "<br>";
 
             // game ends after 15 turns or if one of the entities dies
             if($this->attacker->getHealth() <= 0) {
@@ -121,18 +140,6 @@ class Game
         }
     }
 
-    public function getResults(): string {
-        if($this->winner instanceof Kratos) {
-            $message = "Kratos wins in $this->turn turns!";
-        } elseif($this->winner instanceof Monster) {
-            $message = "Monster wins in $this->turn turns!";
-        } else {
-            $message = "Tie! Maximum number of turns exceeded.";
-        }
-
-        return $message;
-    }
-
     private function initialize(): void {
         // assume attacker is Kratos
         // create Kratos with random stats
@@ -144,6 +151,8 @@ class Game
 
         $this->turn = 1;
         $this->max_turns = 15;
+
+        $this->turns = [];
     }
 
     private function createKratosRandom(): Kratos {
@@ -172,5 +181,18 @@ class Game
         $random_int = mt_rand(0, 100);
 
         return $random_int / 100.0 <= $chance;
+    }
+
+    // TODO return data about each turn
+    public function getResults(): array {
+        if($this->winner instanceof Kratos) {
+            $message = "Kratos wins in $this->turn turns!" . "<br>";
+        } elseif($this->winner instanceof Monster) {
+            $message = "Monster wins in $this->turn turns!" . "<br>";
+        } else {
+            $message = "Tie! Maximum number of turns exceeded." . "<br>";
+        }
+
+        return [$message, $this->turns];
     }
 }
