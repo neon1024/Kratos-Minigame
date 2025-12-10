@@ -20,7 +20,6 @@ const startGame = () => {
 <template>
     <div class="min-h-screen bg-gray-100 text-gray-900 p-8">
         <div class="max-w-4xl mx-auto text-center">
-
             <!-- Start Game Button -->
             <button
                 @click="startGame"
@@ -31,12 +30,10 @@ const startGame = () => {
 
             <!-- If no game has been started, display nothing else -->
             <div v-if="!gameStarted" class="text-gray-500 text-lg mt-4">
-                <!-- empty state intentionally shows nothing -->
             </div>
 
             <!-- After game starts, show results -->
             <div v-else>
-
                 <!-- Winner Message -->
                 <div class="bg-green-200 border border-green-500 text-green-900 px-5 py-4 rounded-lg mb-8 shadow text-left">
                     {{ message }}
@@ -54,7 +51,6 @@ const startGame = () => {
                         </h2>
 
                         <div class="grid md:grid-cols-2 gap-6">
-
                             <!-- Attacker -->
                             <div class="bg-gray-50 border border-gray-300 rounded-lg p-4">
                                 <h3 class="text-xl font-semibold mb-2 text-gray-800">Attacker</h3>
@@ -74,22 +70,26 @@ const startGame = () => {
                         </div>
 
                         <div class="mt-6 grid grid-cols-3 gap-6 text-center bg-gray-50 border border-gray-300 rounded-lg p-4">
+                            <!-- Number of Strikes done by the Attacker -->
                             <div>
                                 <div class="text-xl font-bold text-gray-900">{{ turn.strikes }}</div>
                                 <div class="text-gray-600">Strikes</div>
                             </div>
 
+                            <!-- Number of Dodges done by the Defender -->
                             <div>
                                 <div class="text-xl font-bold text-gray-900">{{ turn.dodges }}</div>
                                 <div class="text-gray-600">Dodges</div>
                             </div>
 
+                            <!-- Damage done by the Attacker -->
                             <div>
                                 <div class="text-xl font-bold text-gray-900">{{ turn.damage }}</div>
                                 <div class="text-gray-600">Damage</div>
                             </div>
                         </div>
 
+                        <!-- Skills used  -->
                         <div
                             v-if="turn.skills_used.length"
                             class="mt-6 bg-blue-50 border border-blue-300 rounded-lg p-4"
@@ -104,7 +104,6 @@ const startGame = () => {
 
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
