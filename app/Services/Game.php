@@ -32,10 +32,8 @@ class Game
         }
 
         while($this->turn <= $this->max_turns) {
-            $attacker_name = $this->attacker instanceof Kratos ? "Kratos" : "Monster";
-            $defender_name = $this->defender instanceof Kratos ? "Kratos" : "Monster";
-            $turn_info = "Turn $this->turn; Attacker $attacker_name; Defender $defender_name;";
-            
+            $skills_used = [];
+
             // defender
             $damage_multiplier = 1;
 
@@ -60,8 +58,7 @@ class Game
                                 break;
                         }
 
-                        $skill_name = $skill->getName();
-                        $turn_info .= " Skill $skill_name used;";
+                        $skills_used[] = $skill->getName();
                     }
                 }
             }
@@ -93,8 +90,7 @@ class Game
                                 break;
                         }
 
-                        $skill_name = $skill->getName();
-                        $turn_info .= " Skill $skill_name used;";
+                        $skills_used[] = $skill->getName();
                     }
                 }
             }
@@ -104,10 +100,11 @@ class Game
             for($try_to_dodge = 0; $try_to_dodge < $strikes; $try_to_dodge++) {
                 if ($this->dodgeTriggered($this->defender)) {
                     $dodges++;
-
-                    $turn_info .= " Dodged an attack!;";
                 }
             }
+
+            $attacker_health_start = $this->attacker->getHealth();
+            $defender_health_start = $this->defender->getHealth();
 
             // damage = attacker strength - defender defence
             $effective_strikes = max(0, $strikes - $dodges);
@@ -115,11 +112,24 @@ class Game
             $damage = $effective_strikes * $base_damage * $damage_multiplier;
             $this->defender->setHealth($this->defender->getHealth() - $damage);
 
-            $turn_info .= " $damage damage done;";
-            $attacker_health = $this->attacker->getHealth();
-            $defender_health = $this->defender->getHealth();
-            $turn_info .= " Attacker has $attacker_health HP; Defender has $defender_health HP;";
-            $this->turns[] = $turn_info . "<br>";
+            $attacker_name = $this->attacker instanceof Kratos ? 'Kratos' : 'Monster';
+            $defender_name = $this->defender instanceof Kratos ? 'Kratos' : 'Monster';
+
+            $turn_data = [
+                'turn' => $this->turn,
+                'attacker_name' => $attacker_name,
+                'defender_name' => $defender_name,
+                'attacker_health_start' => $attacker_health_start,
+                'defender_health_start' => $defender_health_start,
+                'skills_used' => $skills_used,
+                'dodges' => $dodges,
+                'strikes' => $strikes,
+                'damage' => $damage,
+                'attacker_health_end' => $this->attacker->getHealth(),
+                'defender_health_end' => $this->defender->getHealth(),
+            ];
+
+            $this->turns[] = $turn_data;
 
             // game ends after 15 turns or if one of the entities dies
             if($this->attacker->getHealth() <= 0) {
@@ -183,16 +193,18 @@ class Game
         return $random_int / 100.0 <= $chance;
     }
 
-    // TODO return data about each turn
     public function getResults(): array {
-        if($this->winner instanceof Kratos) {
-            $message = "Kratos wins in $this->turn turns!" . "<br>";
-        } elseif($this->winner instanceof Monster) {
-            $message = "Monster wins in $this->turn turns!" . "<br>";
+        if ($this->winner instanceof Kratos) {
+            $message = "Kratos wins in $this->turn turns!";
+        } elseif ($this->winner instanceof Monster) {
+            $message = "Monster wins in $this->turn turns!";
         } else {
-            $message = "Tie! Maximum number of turns exceeded." . "<br>";
+            $message = "Tie! Maximum number of turns exceeded.";
         }
 
-        return [$message, $this->turns];
+        return [
+            'message' => $message,
+            'turns' => $this->turns
+        ];
     }
 }

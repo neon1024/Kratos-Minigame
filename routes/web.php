@@ -1,19 +1,29 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use \App\Services\Game;
+use Inertia\Inertia;
+use App\Services\Game;
 
 Route::get('/', function () {
-    $game = new Game();
-    $game->start();
-    $results = $game->getResults();
 
-    $message = $results[0];
-    $turns = $results[1];
+    // Do we need to start the game?
+    if (request()->query('start') == 1) {
+        $game = new Game();
+        $game->start();
+        $results = $game->getResults();
 
-    echo $message;
-
-    foreach($turns as $turn) {
-        echo $turn;
+        return Inertia::render('GameResults', [
+            'message' => $results['message'],
+            'turns' => $results['turns'],
+            'gameStarted' => true
+        ]);
     }
+
+    // Initial empty state
+    return Inertia::render('GameResults', [
+        'message' => null,
+        'turns' => [],
+        'gameStarted' => false
+    ]);
+
 })->name('game');
