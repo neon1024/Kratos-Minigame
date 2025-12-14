@@ -5,7 +5,6 @@ namespace Tests;
 use App\Models\Kratos;
 use App\Models\MagicArmour;
 use App\Models\RapidFire;
-use App\Models\Skill;
 use PHPUnit\Framework\TestCase;
 
 class KratosTest extends TestCase
@@ -52,5 +51,18 @@ class KratosTest extends TestCase
         $this->assertTrue($speed >= 40 and $speed <= 50);
         $this->assertTrue($luck >= 0.1 and $luck <= 0.2);
         $this->assertEquals($skills, [RapidFire::fromDefaults(), MagicArmour::fromDefaults()]);
+    }
+
+    public function testAddSkill()
+    {
+        $kratos = Kratos::fromRandomStats();
+
+        $this->assertTrue(count($kratos->getSkills()) == 2);
+
+        $new_skill = RapidFire::fromDefaults();
+
+        $kratos->addSkill($new_skill);
+
+        $this->assertTrue(count($kratos->getSkills()) == 3);
     }
 }
