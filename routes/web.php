@@ -20,7 +20,7 @@ Route::get('/', function () {
     return Inertia::render('GameResults', [
         'message' => null,
         'turns' => [],
-        'gameStarted' => false
+        'gameStarted' => false,
     ]);
 
 })->name('game');
