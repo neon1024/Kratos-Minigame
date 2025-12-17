@@ -20,7 +20,7 @@ const startGame = () => {
 <template>
     <div class="min-h-screen bg-gray-100 text-gray-900 p-8">
         <div class="max-w-4xl mx-auto text-center">
-            <!-- Start Game Button -->
+            <!-- Start GameService Button -->
             <button
                 @click="startGame"
                 class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-lg shadow mb-10"

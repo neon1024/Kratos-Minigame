@@ -9,7 +9,7 @@ use App\Models\Skill;
 use App\Models\SkillEffectType;
 use App\Models\SkillType;
 
-class Game
+class GameService
 {
     private Entity $attacker;
     private Entity $defender;
@@ -18,39 +18,40 @@ class Game
     private ?Entity $winner = null;
     private array $turns;
 
-    public function start(): void {
+    public function start(): void
+    {
         $this->initialize();
 
         // begin combat
         // first attacker is who has the highest speed, or luck if speeds are equal
-        if($this->attacker->getSpeed() < $this->defender->getSpeed()) {
+        if ($this->attacker->getSpeed() < $this->defender->getSpeed()) {
             $this->swapRoles();
-        } elseif($this->attacker->getSpeed() == $this->defender->getSpeed()) {
-            if($this->attacker->getLuck() < $this->defender->getLuck()) {
+        } elseif ($this->attacker->getSpeed() == $this->defender->getSpeed()) {
+            if ($this->attacker->getLuck() < $this->defender->getLuck()) {
                 $this->swapRoles();
             }
         }
 
-        while($this->turn <= $this->max_turns) {
+        while ($this->turn <= $this->max_turns) {
             $skills_used = [];
 
             // defender
             $damage_multiplier = 1;
 
             // use skills if present
-            if($this->defender instanceof Kratos) {
+            if ($this->defender instanceof Kratos) {
                 // filter defence skills
                 $defence_skills = array_filter(
                     $this->defender->getSkills(),
-                    function(Skill $skill) {
+                    function (Skill $skill) {
                         return $skill->getSkillType() == SkillType::Defence;
                     });
 
                 // check for triggered skills
-                foreach($defence_skills as /** @var Skill $skill */ $skill) {
-                    if($this->skillTriggered($skill)) {
+                foreach ($defence_skills as /** @var Skill $skill */ $skill) {
+                    if ($this->skillTriggered($skill)) {
                         // apply the skill effect
-                        switch($skill->getSkillEffectType()) {
+                        switch ($skill->getSkillEffectType()) {
                             case SkillEffectType::DamageReduction:
                                 $damage_multiplier *= $skill->getSkillEffectPower();
                                 break;
@@ -66,21 +67,21 @@ class Game
             // attacker
             $strikes = 1;
 
-            if($this->attacker instanceof Kratos) {
+            if ($this->attacker instanceof Kratos) {
                 // filter attack skills
                 $attack_skills = array_filter(
                     $this->attacker->getSkills(),
-                    function(Skill $skill) {
+                    function (Skill $skill) {
                         return $skill->getSkillType() == SkillType::Attack;
                     });
 
                 // check for triggered skills
-                foreach($attack_skills as /** @var Skill $skill */ $skill) {
-                    if($this->skillTriggered($skill)) {
+                foreach ($attack_skills as /** @var Skill $skill */ $skill) {
+                    if ($this->skillTriggered($skill)) {
                         // apply the skill effect
-                        switch($skill->getSkillEffectType()) {
+                        switch ($skill->getSkillEffectType()) {
                             case SkillEffectType::MultipleStrikes:
-                                if($strikes > 1) {
+                                if ($strikes > 1) {
                                     $strikes += $skill->getSkillEffectPower();
                                 } else {
                                     $strikes = $skill->getSkillEffectPower();
@@ -97,7 +98,7 @@ class Game
 
             $dodges = 0;
 
-            for($try_to_dodge = 0; $try_to_dodge < $strikes; $try_to_dodge++) {
+            for ($try_to_dodge = 0; $try_to_dodge < $strikes; $try_to_dodge++) {
                 if ($this->dodgeTriggered($this->defender)) {
                     $dodges++;
                 }
@@ -132,10 +133,10 @@ class Game
             $this->turns[] = $turn_data;
 
             // game ends after 15 turns or if one of the entities dies
-            if($this->attacker->getHealth() <= 0) {
+            if ($this->attacker->getHealth() <= 0) {
                 $this->winner = $this->defender;
                 break;
-            } elseif($this->defender->getHealth() <= 0) {
+            } elseif ($this->defender->getHealth() <= 0) {
                 $this->winner = $this->attacker;
                 break;
             } else {
@@ -143,14 +144,15 @@ class Game
                 $this->turn++;
 
                 // swap roles if game continues
-                if($this->turn <= $this->max_turns) {
+                if ($this->turn <= $this->max_turns) {
                     $this->swapRoles();
                 }
             }
         }
     }
 
-    private function initialize(): void {
+    private function initialize(): void
+    {
         // assume attacker is Kratos
         // create Kratos with random stats
         $this->attacker = $this->createKratosRandom();
@@ -165,35 +167,41 @@ class Game
         $this->turns = [];
     }
 
-    private function createKratosRandom(): Kratos {
+    private function createKratosRandom(): Kratos
+    {
         return Kratos::fromRandomStats();
     }
 
-    private function createMonsterRandom(): Monster {
+    private function createMonsterRandom(): Monster
+    {
         return Monster::fromRandomStats();
     }
 
-    private function swapRoles(): void {
+    private function swapRoles(): void
+    {
         $aux = $this->attacker;
         $this->attacker = $this->defender;
         $this->defender = $aux;
     }
 
-    private function dodgeTriggered(Entity $entity): bool {
+    private function dodgeTriggered(Entity $entity): bool
+    {
         $dodge_chance = $entity->getLuck();
         $random_int = mt_rand(0, 100);
 
         return $random_int / 100.0 <= $dodge_chance;
     }
 
-    private function skillTriggered(Skill $skill): bool {
+    private function skillTriggered(Skill $skill): bool
+    {
         $chance = $skill->getChance();
         $random_int = mt_rand(0, 100);
 
         return $random_int / 100.0 <= $chance;
     }
 
-    public function getResults(): array {
+    public function getResults(): array
+    {
         if ($this->winner instanceof Kratos) {
             $message = "Kratos wins in $this->turn turns!";
         } elseif ($this->winner instanceof Monster) {

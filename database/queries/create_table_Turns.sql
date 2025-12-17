@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS Turns
 
     CHECK (attacker <> defender),
 
+    strikes              INT,
+    dodges               INT,
     defender_health_left NUMERIC(3, 2),
     damage_done          NUMERIC(3, 2)
 );
