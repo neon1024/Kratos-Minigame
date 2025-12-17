@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\GameService;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class GameController extends Controller
@@ -26,5 +27,12 @@ class GameController extends Controller
             'turns' => [],
             'gameStarted' => false,
         ]);
+    }
+
+    public function databaseResults()
+    {
+        $games = DB::select("SELECT * FROM Games");
+
+        return Inertia::render("DatabaseResults", ["data" => $games]);
     }
 }
